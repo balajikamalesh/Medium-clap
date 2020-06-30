@@ -1,9 +1,11 @@
 import React, { 
-    useState, 
+    useState,
+    useEffect, 
     useCallback, 
     useLayoutEffect, 
     createContext, 
     useMemo, 
+    useRef,
     useContext
 } from 'react'
 
@@ -30,7 +32,7 @@ const useClapAnimation = ({
     const triangleBurst = new mojs.Burst({
       parent: burstEl,
       radius: { 50: 95 },
-      count: 5,
+      count: 10,
       angle: 30,
       children: {
         shape: 'polygon',
@@ -122,7 +124,7 @@ const initialState = {
 const MediumClapContext = createContext();
 const { Provider } = MediumClapContext;
 
-const MediumClap = ({children}) => {
+const MediumClap = ({children, onClap}) => {
   const MAXIMUM_USER_CLAP = 50
   const [clapState, setClapState] = useState(initialState)
   const { count, countTotal } = clapState
@@ -145,9 +147,17 @@ const MediumClap = ({children}) => {
     burstEl: clapRef
   })
 
+  const componentJustMounted = useRef(true);
+
+  useEffect(() => {
+    if(!componentJustMounted.current){
+      onClap && onClap(clapState);
+    }
+    componentJustMounted.current = false;
+  },[count])
+
   const handleClapClick = () => {
     animationTimeline.replay()
-    debugger;
     setClapState({
       count: Math.min(count + 1, MAXIMUM_USER_CLAP),
       countTotal: count < MAXIMUM_USER_CLAP ? countTotal + 1 : countTotal,
@@ -208,8 +218,9 @@ MediumClap.Count = ClapCount;
 MediumClap.Total = CountTotal;
 
 const Usage = () => {
+  const [count, setCount] = useState(0);
   const handleClap = (clapState) => {
-
+    setCount(clapState.count);
   }
   return (
       <div>
@@ -218,7 +229,9 @@ const Usage = () => {
           <MediumClap.Count />
           <MediumClap.Total />
         </MediumClap>
-        <div></div>
+        <br/>
+        <br/>
+        <div>{`You have clapped ${count} times`}</div>
       </div>
     )
 }
